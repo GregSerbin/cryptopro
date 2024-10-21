@@ -66,10 +66,10 @@ Total: SYS: 0,030 sec USR: 0,010 sec UTC: 46,680 sec
 
 # Открыть(проверить) контейнер можно утилитой csptest. Она находится в директории /opt/cprocsp/bin/<архитектура> :
 # Открыть(проверить) контейнер пользователя:
-/opt/cprocsp/bin/amd64/csptest -keyset -check -cont '\\.\имя считывателя\имя контейнера'
+/opt/cprocsp/bin/amd64/csptest -keyset -check -cont '\\.\HDImage\CpnginxStore'
 
 # Открыть(проверить) контейнер компьютера:
-/opt/cprocsp/bin/amd64/csptest -keyset -check -cont '\\.\имя считывателя\имя контейнера' -machinekeyset
+/opt/cprocsp/bin/amd64/csptest -keyset -check -cont '\\.\HDImage\CpnginxStore' -machinekeyset
 
 # где имя считывателя:
 # HDIMAGE, если используете жесткий диск для хранения ключей

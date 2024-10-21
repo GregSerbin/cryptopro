@@ -95,6 +95,9 @@ openssl pkcs7 -in certnew.p7b -inform PEM -print_certs -out root_server.pem
 Проверяем содержимое рутового хранилища доверенных сертификатов
 /opt/cprocsp/bin/amd64/certmgr -list -store uTrustedCerts
 
+Устанавливаем рутовый сертификат в контейнер
+/opt/cprocsp/bin/amd64/certmgr -install -file root.pem -cont '\\.\HDImage\CpnginxStore' -to-container -keep_exportable  # -to-container - этого ключа нет в официальном мануале (pdf), при этом есть в хэлпе по ключу certmgr -install -help
+
 5) Устанавливаем серверный сертификат в хранилище пользователя cpnginx
 # /opt/cprocsp/bin/amd64/certmgr -inst -file server.pem -store uMy -cont '\\.\HDImage\CpnginxStore' # так тоже вроде можно, но предпочел это сделать одной командой
 /opt/cprocsp/bin/amd64/certmgr -install -file server.pem -store uMy
@@ -227,4 +230,11 @@ PrivateKey Link: Yes. Container: HDIMAGE\\999996.000\D7BB
 Обратите внимание на строку "PrivateKey Link: Yes. Container: HDIMAGE\\999996.000\D7BB". Она показывает наличие связи сертификата и приватного ключа, если выводится "PrivateKey Link: No" это означает, что связь не установлена и использовать такой контейнер для подписи не удастся.
 
 
-Возможно у меня кривое имя контейнера...
+----------
+
+Не забывай про закрытый ключ, без него подписываться ничего не будет.
+Установить сертификат из закрытого ключа:
+csptest.exe -property -cinstall -cont ИмяЗакрытогоКлюча
+
+----------
+
