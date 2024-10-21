@@ -1,0 +1,93 @@
+# Полезные статьи на сайте КриптоПРО по работе с ключами и сертификатами
+# https://www.cryptopro.ru/category/faq/linuxunix/rabota-s-klyuchami-i-sertifikatami
+
+
+#  Что такое ключевой контейнер? https://www.cryptopro.ru/faq/chto-takoe-klyuchevoi-konteiner-zachem-nuzhen-parol-na-konteiner
+
+# Документация cryptcp https://www.cryptopro.ru/sites/default/files/products/cryptcp/cryptcp_5.0.x.pdf
+
+#  Особенности регистрации сертификата в СМЭВ 4: https://info.gosuslugi.ru/articles/Особенности_регистрации_сертификата_в_СМЭВ_4/
+
+
+
+
+
+# 1) Создание контейнера средствами linux
+
+# Создание контейнера пользователя:
+csptest -keyset -newkeyset -cont '\\.\имя считывателя\имя контейнера'
+
+# Создание контейнера компьютера:
+csptest -keyset -newkeyset -cont '\\.\имя считывателя\имя контейнера' -machinekeyset
+
+# где имя считывателя:
+# HDIMAGE, если используете жесткий диск для хранения ключей
+# FLASH, если используете флешку
+# FAT12_0, если используете дискету
+# если используете другой считыватель, то имя считывателя, настроенное Вами для этого считывателя.
+
+csptest -keyset -newkeyset -container '\\.\HDImage\key_cont'
+
+# В выводе команды выше указано, что нет приватного ключа
+CSP (Type:80) v5.0.10013 KC1 Release Ver:5.0.13000 OS:Linux CPU:AMD64 FastCode:READY:AVX,AVX2.
+AcquireContext: OK. HCRYPTPROV: 11805507
+GetProvParam(PP_NAME): Crypto-Pro GOST R 34.10-2012 KC1 CSP
+Container name: "key_cont"
+Signature key is not available.
+Attempting to create a signature key...
+Press keys to provide random data...
+[..............................................................................]
+Crypto-Pro GOST R 34.10-2012 KC1 CSP запрашивает новый пароль на контейнер
+Новый пароль:
+Повторите пароль:
+Ввод и подтверждение не совпадают.
+Новый пароль:
+Повторите пароль:
+a signature key created.
+Exchange key is not available.
+Attempting to create an exchange key...
+Press keys to provide random data...
+[..............................................................................]
+an exchange key created.
+Keys in container:
+  signature key
+  exchange key
+Extensions:
+  OID: 1.2.643.2.2.37.3.9
+  PrivKey: Not specified - 21.01.2026 06:53:34 (UTC)
+
+  OID: 1.2.643.2.2.37.3.10
+  PrivKey: Not specified - 21.01.2026 06:54:03 (UTC)
+Total: SYS: 0,030 sec USR: 0,010 sec UTC: 46,680 sec
+[ErrorCode: 0x00000000]
+
+
+# 2) Как проверить, работоспособен ли контейнер с ключами?
+
+# Открыть(проверить) контейнер можно утилитой csptest. Она находится в директории /opt/cprocsp/bin/<архитектура> :
+# Открыть(проверить) контейнер пользователя:
+/opt/cprocsp/bin/amd64/csptest -keyset -check -cont '\\.\имя считывателя\имя контейнера'
+
+# Открыть(проверить) контейнер компьютера:
+/opt/cprocsp/bin/amd64/csptest -keyset -check -cont '\\.\имя считывателя\имя контейнера' -machinekeyset
+
+# где имя считывателя:
+# HDIMAGE, если используете жесткий диск для хранения ключей
+# FLASH, если используете флешку
+# FAT12_0, если используете дискету
+# если используете другой считыватель, то имя считывателя, настроенное Вами для этого считывателя.
+
+
+# 3) Как посмотреть список закрытых ключей?
+# Список контейнеров с закрытыми ключами можно посмотреть утилитой csptest. Она находится в директории /opt/cprocsp/bin/<архитектура>
+
+# Перечисление контейнеров пользователя:
+/opt/cprocsp/bin/amd64/csptest -keyset -enum_cont -verifycontext -fqcn
+
+# Перечисление контейнеров компьютера:
+/opt/cprocsp/bin/amd64/csptest -keyset -enum_cont -verifycontext -fqcn -machinekeys
+
+# В полученном списке имена контейнеров будут представлены в том виде, в котором их воспринимают все бинарные утилиты, входящие в дистрибутив CSP (\\.\<имя считывателя>\<имя контейнера>).
+
+
+# 4) 

@@ -1,0 +1,230 @@
+0) Статья с полезными командами 
+https://redos.red-soft.ru/base/redos-7_3/7_3-security/7_3-ext-szi/7_3-cpro/7_3-certs-cryptopro/?nocache=1729511281707#h2
+https://grigory-panov.blogspot.com/2012/06/cryptopro.html
+
+
+0) Ссылка на оригинальную иснструкцию по установке Nginx из дистрибутива КриптоПро
+https://support.cryptopro.ru/index.php?/Knowledgebase/Article/View/440/0/nginx-gost-binary-packages
+
+1) Выкачиваем дистрибутив  КриптоПро CSP 5.0 R3 https://cryptopro.ru/products/csp/downloads#latest_csp50r3_linux
+Контрольная сумма
+ГОСТ: 645DBAB47AE16B236A95F763FAD05E35E44FC7962EC4BBD764FADF0EA6BAE8AB
+MD5: 7ba687b961720e2d11b34d7bf384b51a
+
+2) Подготовка дистрибутива
+tar -xvf ./linux-amd64.tar.gz && cd ./linux-amd64/
+
+3) Устанавливаем Nginx командой
+sudo ./install.sh cprocsp-nginx
+* по умолчанию устанавливается пакет с корневыми сертификатами Минкомсвязи
+
+4) Активация лицензии.
+На тестовых стендах не активировал лицензию, команды не выполнял
+
+---------
+
+Работа с сертификатами
+1) Создаем запрос на подписание сертификата для Nginx и ключевой контейнер
+
+В документации есть команда вида ниже. Но она не работает, не хватает прав, чтобы сохранить request.pem пользователю cpnginx
+
+sudo -u cpnginx /opt/cprocsp/bin/amd64/cryptcp -createrqst request.pem -provtype 80 -cont '\\.\HDImage\CpnginxStore' -dn "CN=nginx.sber.ru" -both -ku -provname "Crypto-Pro GOST R 34.10-2012 Cryptographic Service Provider" # Эта команда падает с ошибкой
+
+Ошибка:
+centos@nginx ~]$ sudo -u cpnginx /opt/cprocsp/bin/amd64/cryptcp -createrqst request.pem -provtype 80 -cont '\\.\HDImage\CpnginxStore' -dn "CN=nginx.sber.ru" -both -ku -provname "Crypto-Pro GOST R 34.10-2012 Cryptographic Service Provider"
+CryptCP 5.0 (c) "КРИПТО-ПРО", 2002-2024.
+Утилита командной строки для подписи и шифрования файлов.
+Press keys to provide random data...
+[..............................................................................]
+Crypto-Pro GOST R 34.10-2012 Cryptographic Service Provider запрашивает новый пароль на контейнер
+Новый пароль:
+Повторите пароль:
+Ошибка: Не удалось открыть файл 'request.pem'.
+../../../../CSPbuild/CSP/samples/CPCrypt/Files.cpp:80: 0x20000065
+[ErrorCode: 0x20000065]
+
+
+Поэтому выдаю права на sudo для пользователя cpnginx, под которым работает nginx
+  1) sudo visudo
+  2) добавляем запись "cpnginx         ALL=(ALL)       NOPASSWD: ALL"
+
+
+Далее выполняю команду
+# Вопросы: 
+# 1. Как указать не только CN, но и Alternative Names?
+# 2. Как указать тип сертификата (серверный или клиентский)?
+
+# В названии контейнера нельзя использовать симовлы подчеркивания, тире и спецсимволы. Только латинские буквы и цифры. Регистр может быть любым.
+
+/opt/cprocsp/bin/amd64/cryptcp -createrqst request.pem -provtype 80 -cont '\\.\HDImage\CpnginxStore' -dn "CN=nginx.sber.ru" -both -ku -provname "Crypto-Pro GOST R 34.10-2012 Cryptographic Service Provider" -certusage 1.3.6.1.5.5.7.3.1,1.3.6.1.5.5.7.3.2
+
+  Если контейнер уже существует, его можно удалить командой 
+    /opt/cprocsp/bin/amd64/csptest -keyset -deletekeyset -container '\\.\HDImage\CpnginxStore'
+
+  Сертификат можно удалить командой
+    /opt/cprocsp/bin/amd64/certmgr -delete -store uMy -dn "CN=nginx.sber.ru" 
+
+Результатом выполнения команды на создание запроса будет запрос request.pem и контейнер пользователя.
+
+Просмотреть запрос на сертификат можно командой
+  openssl req -in request.pem -noout -text
+Проверить, что контейнер создан, можно командой вывода всех контейнеров:
+  /opt/cprocsp/bin/amd64/csptest -keyset -enum_cont -verifycontext -fqcn
+
+2) Подписываем запрос на сертификат на сайте КриптоПРО https://testgost2012.cryptopro.ru/certsrv/certrqxt.asp
+Выбираем вариант "Base64-шифрование" и нажимаем на ссылку "Загрузить цепочку сертификатов".
+Будет скачан файл certnew.p7b, в котором лежит серверный и рутовый сертификаты (2 шт)
+
+3) Конвертируем серверный и рутовый сертификаты в pem и раскладываем по отдельным файлам
+openssl pkcs7 -in certnew.p7b -inform PEM -print_certs -out root_server.pem
+    1. server.pem
+    2. root.pem
+
+4) Устанавливаем рутовый сертификат в хранилище
+# Вопрос: 
+# 1) нужно ли добавлять сертификат в контейнер?
+# 2) как экспортировать контейнер с сертификатами?
+# нужно взять из инструкции по настройке Nginx часть, где подкладывается контейнер целиком. Проверить, как это работает 
+
+/opt/cprocsp/bin/amd64/certmgr -inst -store uRoot -file root.pem
+Проверяем содержимое рутового хранилища
+/opt/cprocsp/bin/amd64/certmgr -list -store uRoot
+
+Устанавливаем рутовый сертификат в хранилище доверенных сертификатов
+/opt/cprocsp/bin/amd64/certmgr -inst -store uTrustedCerts -file root.pem
+Проверяем содержимое рутового хранилища доверенных сертификатов
+/opt/cprocsp/bin/amd64/certmgr -list -store uTrustedCerts
+
+5) Устанавливаем серверный сертификат в хранилище пользователя cpnginx
+# /opt/cprocsp/bin/amd64/certmgr -inst -file server.pem -store uMy -cont '\\.\HDImage\CpnginxStore' # так тоже вроде можно, но предпочел это сделать одной командой
+/opt/cprocsp/bin/amd64/certmgr -install -file server.pem -store uMy
+/opt/cprocsp/bin/amd64/certmgr -install -file server.pem -cont '\\.\HDImage\CpnginxStore' -to-container  # -to-container - этого ключа нет в официальном мануале (pdf), при этом есть в хэлпе по ключу certmgr -install -help
+Проверяем содержимое пользовательского хранилища
+/opt/cprocsp/bin/amd64/certmgr -list -store uMy
+
+Проверяем содержимое контейнера
+/opt/cprocsp/bin/amd64/certmgr -list -container '\\.\HDImage\CpnginxStore'
+
+
+6) Для последующей настройки нужно узнать серийный номер серверного сертификата
+/opt/cprocsp/bin/amd64/certmgr -list -store uMy
+
+0x7C001713D583FF1412B7562D4E000A001713D5
+
+---------
+
+Настройка конфигов Nginx
+
+1) Создаем конфигурационный файл для sspi.conf
+sudo touch /etc/opt/cprocsp/cpnginx/conf.d/sspi.conf
+
+Помещаем в него конфигурацию "server"
+
+2) В файл по пути /etc/opt/cprocsp/cpnginx/cpnginx.conf добавляем секцию "stream" из инструкции по настройке Nginx
+
+Справка по nginx:
+Путь к определению сервиса: /usr/lib/systemd/system/cpnginx.service
+Путь к конфигу: /etc/opt/cprocsp/cpnginx/cpnginx.conf
+Путь к логам: var/log/cpnginx/error.log
+
+---------
+Результат запуска Nginx:
+В логах есть ошибка: 5029#0: AcquireCredentialsHandle failed: 0x80090307
+
+Причина - отсутствие лицензии на серверный TLS
+Пример подобных ошибок:
+https://www.cryptopro.ru/forum2/default.aspx?g=posts&m=148041#post148041
+
+Подробнее о лицензировании: https://support.cryptopro.ru/index.php?/Knowledgebase/Article/View/335/0/politik-licenzirovnija-kriptopro-csp-50-r2
+
+""Лицензия на право использования СКЗИ "КриптоПро CSP" версии 5.0 TLS-сервер"
+
+Позволяет использовать все возможности "Лицензия на право использования СКЗИ "КриптоПро CSP" версии 5.0 на сервере" и использовать серверный TLS на серверных ОС, отличных от Windows.
+
+Лицензия может быть:
+
+ограниченной по количеству клиентских подключений от 500 до 10000;
+неограниченной.
+Изменения касаются только КриптоПро CSP на серверных операционных системах, отличных от ОС Windows (т.е. Linux, FreeBSD и т.д.)."
+
+
+
+
+На странице скачивания Nginx есть следующая инфа:
+
+https://cryptopro.ru/products/csp/downloads#latest_csp50r3_linux
+
+Изменилась схема лицензирования. Требуются лицензии для КриптоПро CSP 5.0 (начинаются на 50). TLS-сервер на *nix требует особую лицензию. Демо лицензия перестала быть серверной.
+
+---------
+
+Проверка подключения к Nginx с ГОСТ шифрованием
+
+/opt/cprocsp/bin/amd64/csptest -tlsc -server 192.168.163.135 -port 443 -proto 6 -ciphers ff85:c100:c101:c102 -nosave -nocheck -v 
+
+Получаю ошибку:
+
+Cipher strengths: 128..256
+Supported protocols: 0x800:
+    Transport Layer Security 1.2 client side
+dwProtocolMask: 0x800e2aaa
+Protocol version: 3.3
+ClientHello: RecordLayer: TLS, Len: 106
+SessionId: (empty)
+Cipher Suites: (c1 00) (c1 01) (c1 02) (ff 85) 
+111 bytes of handshake data sent
+**** Server unexpectedly disconnected
+../../../../CSPbuild/CSP/samples/csptest/WebClient.c:909:Error performing handshake.
+Error 0x80090304: Внутренняя ошибка пакета безопасности 
+WARNING: ENOTCONN on socket shutdown (ungraceful shutdown)
+Total: SYS: 0,000 sec USR: 0,000 sec UTC: 0,020 sec
+[ErrorCode: 0x80090304]
+-------
+
+Импорт сертификатов в контейнер
+/opt/cprocsp/bin/amd64/certmgr -inst -cont '\\.\HDImage\CpnginxStore' -file server.pem
+
+Просмотр сертификатов в контейнере
+/opt/cprocsp/bin/amd64/certmgr -list -cont '\\.\HDImage\CpnginxStore'
+
+
+---------
+Команда импорта серта в контейнер проходит без ошибок, но при попытке посмотреть сертификаты в контейнере получаю ошибку:
+
+[cpnginx@nginx cpnginx_certs]$ /opt/cprocsp/bin/amd64/certmgr -list -container '\\.\HDImage\CpnginxStore'
+Certmgr Ver:5.0.13000 OS:Linux CPU:AMD64 (c) "КРИПТО-ПРО", 2007-2024.
+Программа для работы с сертификатами, CRL и хранилищами.
+Ошибка GetKeyParam
+
+Требуемый сертификат не существует. 
+
+[ErrorCode: 0x8010002c]
+
+
+Возможная причина - истек сертификат.
+https://info.gosuslugi.ru/articles/Типовые_ошибки_Агента_СМЭВ4/  п.4
+
+---------
+
+Контейнер лежит по пути /var/opt/cprocsp/keys/cpnginx/keyrcont.000
+
+
+
+Контейнер должен быть готов к использованию, проверить это можно командами:
+$ certmgr --list
+Certmgr 0.9 prerelease (c) "CryptoPro",  2007-2010.
+program for managing certificate(CRL) and stores
+
+=============================================================================
+1-------
+Issuer         : DC=ru, DC=issuer, CN=EXAMPLE
+Subject        : C=RU, S=RUSSIA, L=MOSCOW, O=ORGANIZATION, OU=IT, CN=GATE_DEMO, E=gate@example.com
+Serial         : 0x2225000000007DF78065
+PrivateKey Link: Yes. Container: HDIMAGE\\999996.000\D7BB
+=============================================================================
+
+[ErrorCode: 0x00000000]
+Обратите внимание на строку "PrivateKey Link: Yes. Container: HDIMAGE\\999996.000\D7BB". Она показывает наличие связи сертификата и приватного ключа, если выводится "PrivateKey Link: No" это означает, что связь не установлена и использовать такой контейнер для подписи не удастся.
+
+
+Возможно у меня кривое имя контейнера...
