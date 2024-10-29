@@ -2,6 +2,12 @@
 https://redos.red-soft.ru/base/redos-7_3/7_3-security/7_3-ext-szi/7_3-cpro/7_3-certs-cryptopro/?nocache=1729511281707#h2
 https://grigory-panov.blogspot.com/2012/06/cryptopro.html
 
+https://pushorigin.ru/cryptopro/cryptcp - очень полезная статья с настройкой ГОСТ TLS. Есть раздел про "Экспорт сертификатов на другую машину"
+
+Узнать версию дистрибутива КриптоПРО https://www.cryptopro.ru/forum2/default.aspx?g=posts&t=6013
+
+/opt/cprocsp/bin/amd64/csptest -keyset -verifycontext
+
 
 0) Ссылка на оригинальную иснструкцию по установке Nginx из дистрибутива КриптоПро
 https://support.cryptopro.ru/index.php?/Knowledgebase/Article/View/440/0/nginx-gost-binary-packages
@@ -54,7 +60,7 @@ Crypto-Pro GOST R 34.10-2012 Cryptographic Service Provider запрашивае
 # 1. Как указать не только CN, но и Alternative Names?
 # 2. Как указать тип сертификата (серверный или клиентский)?
 
-# В названии контейнера нельзя использовать симовлы подчеркивания, тире и спецсимволы. Только латинские буквы и цифры. Регистр может быть любым.
+# В названии контейнера нельзя использовать симовлы подчеркивания, тире и спецсимволы. Только латинские буквы и цифры, не более 8 символов. Регистр может быть любым.
 
 /opt/cprocsp/bin/amd64/cryptcp -createrqst request.pem -provtype 80 -cont '\\.\HDImage\CpnginxStore' -dn "CN=nginx.sber.ru" -both -ku -provname "Crypto-Pro GOST R 34.10-2012 Cryptographic Service Provider" -certusage 1.3.6.1.5.5.7.3.1,1.3.6.1.5.5.7.3.2
 
@@ -80,6 +86,15 @@ openssl pkcs7 -in certnew.p7b -inform PEM -print_certs -out root_server.pem
     1. server.pem
     2. root.pem
 
+3.5) Копируем серверный сертификат в хранилище с контейнерами
+cp ~/cpnginx_certs/server.pem /var/opt/cprocsp/keys/cpnginx/
+
+3.6) Проверяем, что в контейнере есть ключ именно для TLS
+/opt/cprocsp/bin/amd64/csptest -keyset -container '\\.\HDImage\CpnginxStore' -info
+
+Нужно убедиться, что в выводе команды есть запись "Exchange key is available. HCRYPTKEY: 0xa35a83"
+Ключ обязательно должен быть типа "Exchange"
+
 4) Устанавливаем рутовый сертификат в хранилище
 # Вопрос: 
 # 1) нужно ли добавлять сертификат в контейнер?
@@ -92,6 +107,7 @@ openssl pkcs7 -in certnew.p7b -inform PEM -print_certs -out root_server.pem
 
 Устанавливаем рутовый сертификат в хранилище доверенных сертификатов
 /opt/cprocsp/bin/amd64/certmgr -inst -store uTrustedCerts -file root.pem
+/opt/cprocsp/bin/amd64/certmgr -inst -store uTrustedCerts -file server.pem
 Проверяем содержимое рутового хранилища доверенных сертификатов
 /opt/cprocsp/bin/amd64/certmgr -list -store uTrustedCerts
 
@@ -237,4 +253,56 @@ PrivateKey Link: Yes. Container: HDIMAGE\\999996.000\D7BB
 csptest.exe -property -cinstall -cont ИмяЗакрытогоКлюча
 
 ----------
+Попытка запустить сервер с ГОСТ TLS
+
+Источник: https://www.cryptopro.ru/forum2/default.aspx?g=posts&t=19784
+
+/opt/cprocsp/bin/amd64/csptest -tlss -user 0720cb531a6ea58b0a86a4b7a8cd1cdc3b37ca7b -port 1443 -auth -ciphers c100 -verbose -proto 6
+
+-user - здесь нужно указать или CN сертификата (например, -user nginx.sber.ru), или sha1 сертификата (например, -user 0720cb531a6ea58b0a86a4b7a8cd1cdc3b37ca7b)
+
+/opt/cprocsp/bin/amd64/csptest -tlss -user 0720cb531a6ea58b0a86a4b7a8cd1cdc3b37ca7b -port 1443 -auth -ciphers c100 -verbose -proto 6
+/opt/cprocsp/bin/amd64/csptest -tlss -user 0720cb531a6ea58b0a86a4b7a8cd1cdc3b37ca7b -port 2443 -Auth -ciphers c100 -verbose -proto 6
+/opt/cprocsp/bin/amd64/csptest -tlss -user 0720cb531a6ea58b0a86a4b7a8cd1cdc3b37ca7b -port 3443 -auth -ciphers c101 -verbose -proto 6
+/opt/cprocsp/bin/amd64/csptest -tlss -user 0720cb531a6ea58b0a86a4b7a8cd1cdc3b37ca7b -port 4443 -Auth -ciphers c101 -verbose -proto 6
+/opt/cprocsp/bin/amd64/csptest -tlss -user 0720cb531a6ea58b0a86a4b7a8cd1cdc3b37ca7b -port 5443 -auth -ciphers c102 -verbose -proto 6
+/opt/cprocsp/bin/amd64/csptest -tlss -user 0720cb531a6ea58b0a86a4b7a8cd1cdc3b37ca7b -port 6443 -Auth -ciphers c102 -verbose -proto 6
+
+Получаю ошибку по всем командам:
+  ----------
+  [cpnginx@nginx cpnginx]$ /opt/cprocsp/bin/amd64/csptest -tlss -user 0720cb531a6ea58b0a86a4b7a8cd1cdc3b37ca7b -port 1443 -auth -ciphers c100 -verbose -proto 6
+  #0: 
+  Subject: CN=nginx.sber.ru
+  Valid  : 21.10.2024 19:32:29 - 21.12.2024 19:42:29 (UTC)
+  Issuer : ОГРН=1234567890123, ИНН=001234567890, STREET=ул. Сущёвский вал д. 18, C=RU, S=г. Москва, L=Москва, O="ООО ""КРИПТО-ПРО""", CN="Тестовый УЦ ООО ""КРИПТО-ПРО"""
+
+  Subject: CN=nginx.sber.ru
+  Valid  : 21.10.2024 19:32:29 - 21.12.2024 19:42:29 (UTC)
+  Issuer : ОГРН=1234567890123, ИНН=001234567890, STREET=ул. Сущёвский вал д. 18, C=RU, S=г. Москва, L=Москва, O="ООО ""КРИПТО-ПРО""", CN="Тестовый УЦ ООО ""КРИПТО-ПРО"""
+  **** Error 0xffffffff80090307 returned by AcquireCredentialsHandle
+  ../../../../CSPbuild/CSP/samples/csptest/WebServer.c:560:Error creating credentials.
+  Error 0x0: 
+  Total: SYS: 0,000 sec USR: 0,000 sec UTC: 0,010 sec
+  [ErrorCode: 0x00000001]
+
+
+Ошибка в логе по пути /var/log/messages
+../messages:Oct 29 22:36:37 nginx csptest[4772]: <ssp>AddToMessageLog!CryptoPro TLS. Server license not found. Since CSP5R2 you need an exclusive TLS Server license
+
+Обсуждение этой проблемы на форуме: https://github.com/CryptoPro/libcore/issues/21
+
+  ----------
+
+---------------------------------------------------------------------------
+Переустановил КриптоПРО на версию "КриптоПро CSP 5.0 для Linux"
+https://cryptopro.ru/products/csp/downloads#latest_csp50_linux
+
+На странице выше есть инструкции в формате pdf, раздел "Документация по установке и использованию КриптоПро CSP 5.0 R2 в формате PDF"
+
+Для Linux (x64, rpm)Контрольная сумма
+ГОСТ: 7009F2DA5C1F75F29DB38F89B54BFAFF299167EEE8CFB41C8A91A69D8844EA13
+MD5: b87bbe581d2431c71b8ec79f4bf7303b
+
+https://cryptopro.ru/sites/default/files/private/csp/50/11455/linux-amd64.tgz
+
 
