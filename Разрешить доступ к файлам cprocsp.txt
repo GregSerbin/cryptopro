@@ -1,0 +1,11 @@
+окт 31 01:36:40 smev.sber.ru java[9224]: 01:36:40.695907 support_an_fopen:87 p:9224 t:0x0x7f786ee905a0 support_an_fopen("/etc/opt/cprocsp/config64.ini", "r+b") = 0x(nil) fail Отказано в доступе(13)
+окт 31 01:36:40 smev.sber.ru java[9224]: 01:36:40.696615 support_an_fopen:87 p:9224 t:0x0x7f786ee905a0 support_an_fopen("/etc/opt/cprocsp/config64.ini", "w+b") = 0x(nil) fail Отказано в доступе(13)
+окт 31 01:36:40 smev.sber.ru java[9224]: 01:36:40.696882 support_an_fopen:87 p:9224 t:0x0x7f786ee905a0 support_an_fopen("/var/opt/cprocsp/users/centos/policies.ini", "rb") = 0x(nil) fail Нет такого файла или каталога(2)
+окт 31 01:36:40 smev.sber.ru java[9224]: 01:36:40.696973 support_an_fopen:87 p:9224 t:0x0x7f786ee905a0 support_an_fopen("/var/opt/cprocsp/users/centos/policies.ini", "rb") = 0x(nil) fail Нет такого файла или каталога(2)
+окт 31 01:36:40 smev.sber.ru java[9224]: 01:36:40.697117 support_an_fopen:87 p:9224 t:0x0x7f786ee905a0 support_an_fopen("/var/opt/cprocsp/users/global.ini", "rb") = 0x(nil) fail Отказано в доступе(13)
+
+
+
+sudo chmod 777 /etc/opt/cprocsp/config64.ini
+sudo chmod 777 /var/opt/cprocsp/users/centos/policies.ini
+sudo chmod 777 /var/opt/cprocsp/users/global.ini

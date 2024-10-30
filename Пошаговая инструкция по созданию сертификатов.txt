@@ -1,5 +1,80 @@
 
 
-Команды выполняются на сервере с Ubuntu
+Команды выполняются на сервере с Centos
 
-/opt/cprocsp/bin/amd64/cryptcp -createrqst request.pem -provtype 80 -cont '\\.\HDImage\smevstor' -dn "CN=nginx.sber.ru" -both -ku -provname "Crypto-Pro GOST R 34.10-2012 Cryptographic Service Provider" -certusage 1.3.6.1.5.5.7.3.1,1.3.6.1.5.5.7.3.2
+1) Генерация запроса на подписание сертификата
+/opt/cprocsp/bin/amd64/cryptcp -createrqst request.pem -provtype 80 -cont '\\.\HDImage\smevstor' -dn "CN=smev.sber.ru" -both -ku -provname "Crypto-Pro GOST R 34.10-2012 Cryptographic Service Provider" -certusage 1.3.6.1.5.5.7.3.1,1.3.6.1.5.5.7.3.2 -exprt -pin 12345678
+
+/opt/cprocsp/bin/amd64/cryptcp -createrqst request.pem -provtype 80 -cont '\\.\HDImage\smevstor' -dn "CN=smev.sber.ru" -both -ku -certusage 1.3.6.1.5.5.7.3.1,1.3.6.1.5.5.7.3.2 -exprt -pin 12345678
+
+
+-provtype 80 - тип шифрования GOST R 34.10-2012 (256) Signature with Diffie-Hellman Key Exchange
+
+-exprt - пометить ключи как экспортируемые
+-pin установить пароль при создании ключевого контейнера (только UNIX);
+
+-ex создать/использовать ключи для обмена зашифрованными данными;
+-sg создать/использовать ключи только для работы с подписями;
+-both* создать/использовать оба типа ключей;
+
+-ku* использовать контейнер пользователя (CURRENT_USER);
+
+-certusage 1.3.6.1.5.5.7.3.1,1.3.6.1.5.5.7.3.2 - клиентский и серверный сертификат
+
+
+Если опция -provname не указана, то будет использован провайдер по умолчанию указанного типа (-provtype).
+В названии контейнера нельзя использовать символы подчеркивания, тире и спецсимволы. Только латинские буквы и цифры, не более 8 символов. Регистр может быть любым.
+
+2) Подписываем запрос на сертификат на сайте КриптоПРО https://testgost2012.cryptopro.ru/certsrv/certrqxt.asp
+Выбираем вариант "Base64-шифрование" и нажимаем на ссылку "Загрузить цепочку сертификатов".
+Будет скачан файл certnew.p7b, в котором лежит серверный и рутовый сертификаты (2 шт)
+
+3) Конвертируем серверный и рутовый сертификаты в pem и раскладываем по отдельным файлам
+openssl pkcs7 -in certnew.p7b -inform PEM -print_certs -out root_server.pem
+    1. server.pem
+    2. root.pem
+
+4) Устанавливаем серверный сертификат в хранилище пользователя uMy и в контейнер
+Этой командой еще устанавливается связь между серверным сертификатом и закрытым ключом в контейнере
+
+/opt/cprocsp/bin/amd64/certmgr -install -file server.pem -store uMy -cont '\\.\HDImage\smevstor'
+
+Проверяем содержимое пользовательского хранилища
+/opt/cprocsp/bin/amd64/certmgr -list -store uMy
+
+В выводе команды выше важно убедиться, что установлена связь между серверным сертификатом и закрытым ключом в контейнере.
+Если есть 2 строчки ниже, то все ок.
+
+PrivateKey Link     : Yes                 
+Container           : HDIMAGE\\smevstor.000\CC82
+
+4.1) Установить серверный сертификат в контейнер ключей
+
+/opt/cprocsp/bin/amd64/certmgr -inst -inst_to_cont -container '\\.\HDImage\smevstor' -file server.pem
+
+Проверить, что в ключевом контейнере есть сертификат
+/opt/cprocsp/bin/amd64/certmgr -list -container '\\.\HDImage\smevstor'
+
+
+5) Устанавливаем рутовый сертификат в хранилище
+
+/opt/cprocsp/bin/amd64/certmgr -install -store uRoot -file root.pem
+Проверяем содержимое рутового хранилища
+/opt/cprocsp/bin/amd64/certmgr -list -store uRoot
+
+Устанавливаем рутовый сертификат в хранилище доверенных сертификатов
+/opt/cprocsp/bin/amd64/certmgr -install -store uTrustedCerts -file root.pem
+/opt/cprocsp/bin/amd64/certmgr -install -store uTrustedCerts -file server.pem
+Проверяем содержимое рутового хранилища доверенных сертификатов
+/opt/cprocsp/bin/amd64/certmgr -list -store uTrustedCerts
+
+
+6) Проверяем, что в контейнере есть ключ именно для TLS
+/opt/cprocsp/bin/amd64/csptest -keyset -container '\\.\HDImage\smevstor' -info
+
+Нужно убедиться, что в выводе команды есть запись "Exchange key is available. HCRYPTKEY: 0xa35a83"
+Ключ обязательно должен быть типа "Exchange"
+
+
+
+

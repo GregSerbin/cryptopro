@@ -1,0 +1,6 @@
+Нужно изменить политики selinux
+
+https://serverfault.com/questions/1032597/selinux-is-preventing-from-execute-access-on-the-file-centos
+
+sudo semanage fcontext -a -t bin_t "/distr/einfahrt/jdk-17.0.7/bin(/.*)?"
+sudo restorecon -r -v /distr/einfahrt/jdk-17.0.7/bin

@@ -1,0 +1,21 @@
+{"@timestamp":"2024-10-30T22:49:23.443Z",
+"level":"ERROR",
+"thread":"main",
+"logger":"ru.rtlabs.notarius.client.jni.csp.NotariusLocalJniCspFactory",
+"message":"ошибка конфигурации NotariusLocalCspConfig(keys=[KeyCspSettings(privateKeyAlias='smevstor', privateKeyPass=***)])",
+"context":"default",
+"exception":"ru.cryptopro.CryptoProException: Ошибка вызова функции getKeyParam: 0x8010002c Не найден требуемый сертификат\n\tat ru.cryptopro.ErrorsKt.throwCryptoProError(errors.kt:28)\n\tat ru.cryptopro.ErrorsKt.throwCryptoProLastError(errors.kt:16)\n\tat ru.cryptopro.ErrorsKt.c(errors.kt:8)\n\tat ru.cryptopro.CryptoProPrivateKey.exportCertificate(CryptoProPrivateKey.kt:12)\n\tat ru.rtlabs.notarius.client.jni.csp.KeyContext.<init>(NotariusLocalJniCspClient.kt:190)\n\tat ru.rtlabs.notarius.client.jni.csp.NotariusLocalJniCspClient.<init>(NotariusLocalJniCspClient.kt:35)\n\tat ru.rtlabs.notarius.client.jni.csp.NotariusLocalJniCspFactory$create$1.invoke(NotariusLocalJniCspFactory.kt:20)\n\tat ru.rtlabs.notarius.client.jni.csp.NotariusLocalJniCspFactory$create$1.invoke(NotariusLocalJniCspFactory.kt:17)\n\tat ru.cryptopro.ErrorsKt.wrapException(errors.kt:35)\n\tat ru.rtlabs.notarius.client.jni.csp.NotariusLocalJniCspFactory.cre
+
+
+
+
+Причина:
+В ключевой контейнер (имнно в контейнер '\\.\HDImage\smevstor', а не в хранилище uMy) не установлен серверный сертификат
+
+Решение:
+Нужно установить сертификат в контейнер ключей '\\.\HDImage\smevstor' командой
+
+/opt/cprocsp/bin/amd64/certmgr -inst -inst_to_cont -container '\\.\HDImage\smevstor' -file server.pem
+
+Проверить, что в ключевом контейнере есть сертификат
+/opt/cprocsp/bin/amd64/certmgr -list -container '\\.\HDImage\smevstor'

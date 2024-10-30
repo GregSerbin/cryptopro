@@ -1,0 +1,40 @@
+
+
+[Unit]
+Description="Service for einfahrt"
+After=syslog.target
+
+[Service]
+Type=simple
+
+StandardOutput=append:/var/log/einfahrt/output.log
+StandardError=append:/var/log/einfahrt/error.log
+
+WorkingDirectory=/distr/einfahrt
+LimitNOFILE=1048576:1048576
+
+# Важно! Запуск должен производиться от имени того пользователя, для которого ранее были выложены ключи CryptoPro!
+User=centos
+Group=centos
+
+Environment="JAVA_HOME=/distr/einfahrt/jdk-17.0.7"
+Environment="JDK_JAVA_OPTIONS=--add-exports=java.base/sun.security.util=ALL-UNNAMED \
+    --add-exports=java.base/sun.security.x509=ALL-UNNAMED \
+    --add-exports=java.base/sun.security.pkcs=ALL-UNNAMED \
+    --add-exports=java.base/sun.security.provider=ALL-UNNAMED \
+    --add-exports=java.base/sun.security.tools.keytool=ALL-UNNAMED \
+    --add-exports=java.base/sun.net=ALL-UNNAMED \
+    --add-opens=java.base/jdk.internal.misc=ALL-UNNAMED \
+    --add-opens=java.base/java.lang=ALL-UNNAMED \
+    --add-opens=java.base/java.nio=ALL-UNNAMED \
+    --add-opens=java.xml/org.w3c.dom=ALL-UNNAMED \
+    --add-opens=java.base/java.util=ALL-UNNAMED \
+    -Dio.netty.tryReflectionSetAccessible=true \
+    -Dsaffron.default.charset=UTF-16LE \
+    -Dsaffron.default.collation.name='UTF-16LE$en_US' \
+    -Dsaffron.default.nationalcharset=UTF-16LE \
+    -XX:MaxRAMPercentage=80.0"
+ExecStart=/distr/einfahrt/jdk-17.0.7/bin/java -jar app/app.jar
+
+[Install]
+WantedBy=multi-user.target

@@ -90,4 +90,14 @@ Total: SYS: 0,030 sec USR: 0,010 sec UTC: 46,680 sec
 # В полученном списке имена контейнеров будут представлены в том виде, в котором их воспринимают все бинарные утилиты, входящие в дистрибутив CSP (\\.\<имя считывателя>\<имя контейнера>).
 
 
-# 4) 
+# 4) Проверка лицензии Крипто ПРО
+/opt/cprocsp/sbin/amd64/cpconfig -license -view
+
+# 5) Как узнать типы криптопровайдеров?
+$cpconfig -defprov -view_type
+Listing Available Provider Types:
+Provider type   Provider Type Name
+_____________   _____________________________________
+      75        GOST R 34.10-2001 Signature with Diffie-Hellman Key Exchange
+      80        GOST R 34.10-2012 (256) Signature with Diffie-Hellman Key Exchange
+      81        GOST R 34.10-2012 (512) Signature with Diffie-Hellman Key Exchange
