@@ -1,5 +1,3 @@
-
-
 [Unit]
 Description="Service for einfahrt"
 After=syslog.target
@@ -7,17 +5,18 @@ After=syslog.target
 [Service]
 Type=simple
 
-StandardOutput=append:/var/log/einfahrt/output.log
-StandardError=append:/var/log/einfahrt/error.log
+StandardOutput=append:/einfahrt/logs/output.log
+StandardError=append:/einfahrt/logs/error.log
 
-WorkingDirectory=/distr/einfahrt
+WorkingDirectory=/einfahrt/distr
 LimitNOFILE=1048576:1048576
 
-# Важно! Запуск должен производиться от имени того пользователя, для которого ранее были выложены ключи CryptoPro!
-User=centos
-Group=centos
 
-Environment="JAVA_HOME=/distr/einfahrt/jdk-17.0.7"
+# Важно! Запуск должен производиться от имени того пользователя, для которого ранее были выложены ключи CryptoPro!
+User=smevctl
+Group=smevctl
+
+Environment="JAVA_HOME=/einfahrt/distr/java"
 Environment="JDK_JAVA_OPTIONS=--add-exports=java.base/sun.security.util=ALL-UNNAMED \
     --add-exports=java.base/sun.security.x509=ALL-UNNAMED \
     --add-exports=java.base/sun.security.pkcs=ALL-UNNAMED \
@@ -34,7 +33,7 @@ Environment="JDK_JAVA_OPTIONS=--add-exports=java.base/sun.security.util=ALL-UNNA
     -Dsaffron.default.collation.name='UTF-16LE$en_US' \
     -Dsaffron.default.nationalcharset=UTF-16LE \
     -XX:MaxRAMPercentage=80.0"
-ExecStart=/distr/einfahrt/jdk-17.0.7/bin/java -jar app/app.jar
+ExecStart=/einfahrt/distr/java/bin/java -jar app/app.jar
 
 [Install]
 WantedBy=multi-user.target

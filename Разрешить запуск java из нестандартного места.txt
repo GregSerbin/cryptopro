@@ -4,3 +4,38 @@ https://serverfault.com/questions/1032597/selinux-is-preventing-from-execute-acc
 
 sudo semanage fcontext -a -t bin_t "/distr/einfahrt/jdk-17.0.7/bin(/.*)?"
 sudo restorecon -r -v /distr/einfahrt/jdk-17.0.7/bin
+
+
+
+sudo semanage fcontext -a -t bin_t "/einfahrt/distr/java/bin(/.*)?"
+sudo restorecon -r -v /einfahrt/distr/java/bin
+
+
+semanage fcontext -a -t FILE_TYPE '/einfahrt/logs/output.log'
+semanage fcontext -a -t abrt_unit_file_t '/einfahrt/logs/output.log'
+где FILE_TYPE может принимать значения: NetworkManager_unit_file_t, abrt_unit_file_t, acc>
+Затем выполните: 
+restorecon -v '/einfahrt/logs/output.log'
+
+
+
+semanage fcontext -a -t abrt_unit_file_t '/einfahrt/logs/error.log'
+где FILE_TYPE может принимать значения: NetworkManager_unit_file_t, abrt_unit_file_t, acc>
+Затем выполните: 
+restorecon -v '/einfahrt/logs/error.log'
+
+
+
+
+sudo systemctl start einfahrt && sudo systemctl -l status einfahrt
+
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl start einfahrt
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl stop einfahrt
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl restart einfahrt
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl enable einfahrt
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl disable einfahrt
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl start einfahrt.service
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl stop einfahrt.service
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl restart einfahrt.service
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl enable einfahrt.service
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl disable einfahrt.service

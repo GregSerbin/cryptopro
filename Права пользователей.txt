@@ -1,0 +1,44 @@
+
+Пользователь для авторизации: smev_agent:smevctl
+Пользователь для сервиса:     smevctl:smevctl
+
+Объединять ли пользователей в одну группу? Да. 
+
+1. Создаем пользователей
+
+sudo groupadd smevctl
+sudo useradd smev_agent -m -G smevctl -s /bin/bash
+sudo useradd smevctl -m -g smevctl -s /sbin/nologin
+
+2. Создаем файлы для прав
+sudo touch /etc/sudoers.d/smev_agent
+sudo touch /etc/sudoers.d/smevclt
+
+Выдаем список прав для пользователей
+smev_agent:
+sudo -u smevctl /opt/cprocsp/bin/amd64/certmgr *
+sudo -u smevctl /opt/cprocsp/bin/amd64/csptest *
+sudo -u smevctl  /opt/cprocsp/bin/amd64/cryptcp *
+
+права перезапуск сервиса
+sudo systemctl start einfahrt
+sudo systemctl start einfahrt.service
+....
+
+3. В окончательном вариант тут будет скрипт загрузки и установки агента. Сейчас все действия производятся вручную
+
+sudo ./smev_install.sh
+
+Получить его хэш-сумму и добавить в права пользователя
+
+
+4. Установка файла сервиса
++
+
+
+5. Настройка logrotate (стр. 30)
+
+
+
+
+
