@@ -1,3 +1,4 @@
+#!/bin/bash
 
 set -x
 
@@ -14,11 +15,14 @@ installation_path="$istallation_root_path/distr"         # абсолютный 
 logs_path="$istallation_root_path/logs"                  # абсолютный путь к папке, в которой будут лежать логи
 path_to_files_in_distr="$tmp_dir/distr/einfahrt"         # абсолютный путь к файлам дистрибутива после распаковки
 
+
 cd "$tmp_dir" || exit 2
 
 #----------------------------------
 mkdir -p $installation_path
 mkdir -p $logs_path
+touch "$logs_path/output.log"
+touch "$logs_path/error.log"
 chown -R smevctl:smevctl "$istallation_root_path"
 chmod -R ug+rwx "$istallation_root_path"
 
@@ -27,7 +31,7 @@ cp -r "$path_to_files_in_distr"/* "$installation_path"
 
 
 cd "$installation_path"
-1# Распаковка архива с java
+# Распаковка архива с java
 tar xvzf bellsoft*amd64.tar.gz
 
 #java_folder_name=$(basename "$(find . -type d -iname "jdk-*")")
@@ -51,13 +55,5 @@ yum -y install \
         cprocsp-curl-64*.rpm
 
 ./install.sh
-
-
-
-
-
-
-
-
 
 set +x

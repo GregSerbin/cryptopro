@@ -12,18 +12,33 @@ sudo useradd smevctl -m -g smevctl -s /sbin/nologin
 
 2. Создаем файлы для прав
 sudo touch /etc/sudoers.d/smev_agent
-sudo touch /etc/sudoers.d/smevclt
+sudo touch /etc/sudoers.d/smevclt  # по итогу пустой
 
 Выдаем список прав для пользователей
 smev_agent:
-sudo -u smevctl /opt/cprocsp/bin/amd64/certmgr *
-sudo -u smevctl /opt/cprocsp/bin/amd64/csptest *
-sudo -u smevctl  /opt/cprocsp/bin/amd64/cryptcp *
 
-права перезапуск сервиса
-sudo systemctl start einfahrt
-sudo systemctl start einfahrt.service
-....
+visudo -f /etc/sudoers.d/smev_agent
+------
+smev_agent ALL=(root) NOPASSWD: /home/smev_agent/smev_install.sh
+
+smev_agent ALL=(smevctl) NOPASSWD: /opt/cprocsp/bin/amd64/certmgr *
+smev_agent ALL=(smevctl) NOPASSWD: /opt/cprocsp/bin/amd64/csptest *
+smev_agent ALL=(smevctl) NOPASSWD: /opt/cprocsp/bin/amd64/cryptcp *
+smev_agent ALL=(smevctl) NOPASSWD: /opt/cprocsp/bin/amd64/curl *
+
+
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl start einfahrt
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl stop einfahrt
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl restart einfahrt
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl enable einfahrt
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl disable einfahrt
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl start einfahrt.service
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl stop einfahrt.service
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl restart einfahrt.service
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl enable einfahrt.service
+smev_agent ALL=(root) NOPASSWD: /usr/bin/systemctl disable einfahrt.service
+-----
+
 
 3. В окончательном вариант тут будет скрипт загрузки и установки агента. Сейчас все действия производятся вручную
 
