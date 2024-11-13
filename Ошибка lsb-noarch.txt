@@ -1,0 +1,8 @@
+Ошибка:
+
+
+Решение:
+Скачать и установить пакет по ссылке
+http://mirror.ghettoforge.org/distributions/gf/el/9/gf/x86_64/redhat-lsb-core-4.1-59.1.gf.el9.x86_64.rpm
+
+https://rhel.pkgs.org/9/ghettoforge-x86_64/redhat-lsb-core-4.1-59.1.gf.el9.x86_64.rpm.html
