@@ -305,4 +305,27 @@ MD5: b87bbe581d2431c71b8ec79f4bf7303b
 
 https://cryptopro.ru/sites/default/files/private/csp/50/11455/linux-amd64.tgz
 
+---------------------------------------------------------------------------
 
+Установка всех сертификатов из контейнера
+
+/opt/cprocsp/bin/amd64/csptest -absorb -certs -autoprov
+
+
+---------------------------------------------------------------------------
+
+Пути:
+
+sudo vim /etc/opt/cprocsp/cpnginx/cpnginx.conf  # путь к конфигу
+/opt/cprocsp/sbin/amd64/cpnginx                 # путь к бинарю
+less /var/log/cpnginx/error.log                      # путь к логу с ошибками
+
+
+/opt/cprocsp/bin/amd64/curl -vvv https://nginx.sber.ru:443/ --cert 0x7C001713D583FF1412B7562D4E000A001713D5
+
+
+
+
+/opt/cprocsp/bin/amd64/csptest -tlsc -server 192.168.163.135 -port 443 -proto 6 -ciphers ff85:c100:c101:c102 -nosave -nocheck -v 
+
+/opt/cprocsp/bin/amd64/csptest -tlsc -server 127.0.0.1 -port 443  -nosave -nocheck -v 
