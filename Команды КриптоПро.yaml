@@ -101,3 +101,9 @@ _____________   _____________________________________
       75        GOST R 34.10-2001 Signature with Diffie-Hellman Key Exchange
       80        GOST R 34.10-2012 (256) Signature with Diffie-Hellman Key Exchange
       81        GOST R 34.10-2012 (512) Signature with Diffie-Hellman Key Exchange
+
+
+# Удалить пароль с контейнера
+
+/opt/cprocsp/bin/amd64/csptest -passwd -change '' -cont '\\.\HDImage\zl7r07dm' -passwd '<old_pass>'
+
