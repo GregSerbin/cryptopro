@@ -103,7 +103,13 @@ _____________   _____________________________________
       81        GOST R 34.10-2012 (512) Signature with Diffie-Hellman Key Exchange
 
 
+# Запрос для проверки работоспособности агента СМЭВ4
+curl -X POST 'https://agent-ip:8192/query?async=false' -H "Accept-Version: 1" -H "Content-Type: application/json" -d '{"sql": {"sql": "select 1"}}'
+
+
+
 # Удалить пароль с контейнера
 
 /opt/cprocsp/bin/amd64/csptest -passwd -change '' -cont '\\.\HDImage\zl7r07dm' -passwd '<old_pass>'
+
 
